@@ -5,14 +5,20 @@ from PIL import Image, ImageTk
 
 class Board:
     def __init__(self) -> None:
+        self.size = 70
+        self.label = 20
+        self.canvas = tkinter.Canvas(width=self.size*8+(4*self.label) + self.size*5, height=self.size*8+(4*self.label))
+        self.offset = self.label*2
+        self.canvas.pack()
+
         self.board = self.initBoard()
+        self.boardState = BoardState(self.canvas)
         self.initDraw()
-        self.boardState = BoardState()
-        self.ligtWhite = self.changeCol(*tuple(int(c * 0.4 + 255 * 0.6) for c in (247, 220, 215)))
-        self.ligtBlack = self.changeCol(*tuple(int(c * 0.4 + 255 * 0.6) for c in (143, 74, 242)))
+        # lighted squares colors
+        self.ligtWhite = self.changeCol(*tuple(int(c * 0.4 + 255 * 0.6) for c in (102, 216, 185)))
+        self.ligtBlack = self.changeCol(*tuple(int(c * 0.4 + 255 * 0.6) for c in (5, 255, 5)))
     
     def initBoard(self) -> list[list[Piece]]: 
-        veza = Rook('w')
         return [[Rook("b"), Knight("b"), Bishop("b"), Queen("b"), King("b"), Bishop("b"), Knight("b"), Rook("b")],
                 [Pawn('b'), Pawn('b'), Pawn('b'), Pawn('b'), Pawn('b'), Pawn('b'), Pawn('b'), Pawn('b')],
                 [None, None, None, None, None, None, None, None],
@@ -20,7 +26,7 @@ class Board:
                 [None, None, None, None, None, None, None, None],
                 [None, None, None, None, None, None, None, None],
                 [Pawn('w'), Pawn('w'), Pawn('w'), Pawn('w'), Pawn('w'), Pawn('w'), Pawn('w'), Pawn('w')],
-                [veza, Knight("w"), Bishop("w"), Queen("w"), King("w"), Bishop("w"), Knight("w"), Rook("w")]]
+                [Rook('w'), Knight("w"), Bishop("w"), Queen("w"), King("w"), Bishop("w"), Knight("w"), Rook("w")]]
 
     def lightsOn(self, squares: list):
         for row, col in squares:
@@ -50,29 +56,24 @@ class Board:
             # light squares
             validSqr = piece.validMoves(row, col, self.board)
             self.lightsOn(validSqr)
-            print(self.boardState.pos)
         else:
             if self.boardState.pos == None:
                 return
             oldRow, oldCol = self.boardState.pos
             if col == oldCol and row == oldRow:
                 return
-            oldPiece = self.board[oldRow][oldCol]
+            oldPiece: Piece = self.board[oldRow][oldCol]
             validSqr = oldPiece.validMoves(oldRow, oldCol, self.board)
             if (row, col) in validSqr:
-                #lights off
+                # lights off
                 self.lightsOff(validSqr)
                 self.boardState.isPicking = True
-                #move piece
-                piece: Piece = self.board[oldRow][oldCol]
-                if self.board[row][col] != None:
-                    self.canvas.delete(self.board[row][col].imgId)
-
-                self.board[row][col] = self.board[oldRow][oldCol]
-                self.board[oldRow][oldCol] = None
-                self.canvas.coords(piece.imgId, x + self.size//2, y + self.size//2)
+                # move piece
+                oldPiece.makeMove(oldRow, oldCol, row, col, self.size, x, y, self.boardState.piecesTaken ,self.board, self.canvas)
+                # display taken pieces
+                self.boardState.showTaken()
                 #change player
-                self.boardState.player = "w" if self.boardState.player == "b" else "b"
+                self.boardState.setTurn()
             else:
                 #lights off
                 self.lightsOff(validSqr)
@@ -93,16 +94,12 @@ class Board:
         return color
 
     def initDraw(self):
-        self.size = 70
-        self.label = 20
-        self.canvas = tkinter.Canvas(width=self.size*8+(4*self.label), height=self.size*8+(4*self.label))
-        self.offset = self.label*2
-        self.canvas.pack()
+        
         #border
         self.canvas.create_rectangle(self.label, self.label, 8*self.size + self.label*3, 8*self.size + self.label*3)
-
-        self.white = self.changeCol(247, 220, 215)
-        self.black = self.changeCol(143, 74, 242)
+        # square colors 
+        self.white = self.changeCol(247, 230, 225)
+        self.black = self.changeCol(135, 60, 250)
         
         # creating squares 
         for row in range(8):
@@ -142,6 +139,11 @@ class Board:
                     self.pieces.append(obj.tkImage(self.size - self.size * 0.1))
                     pImg = self.canvas.create_image(self.offset+(col*self.size) + self.size/2, self.offset+(row*self.size) + self.size/2, image=self.pieces[-1])
                     self.board[row][col].imgId = pImg
+
+        # Stats
+        self.boardState.drawStats(self.size*8+(4*self.label), self.label, self.size*8+(3*self.label) + self.size*5, self.size*8+(3*self.label), self.size)
+        self.boardState.setTurn()
+        #self.boardState.drawStats(self.size*8 + 3*self.offset, self.label, self.canvas)
 
 class Program:
     def __init__(self):
