@@ -7,13 +7,14 @@ class Board:
     def __init__(self) -> None:
         self.size = 70
         self.label = 20
-        self.canvas = tkinter.Canvas(width=self.size*8+(4*self.label) + self.size*5, height=self.size*8+(4*self.label))
+        self.root = tkinter.Tk()
+        self.canvas = tkinter.Canvas(self.root, width=self.size*8+(4*self.label) + self.size*5, height=self.size*8+(4*self.label))
         self.offset = self.label*2
         self.canvas.pack()
 
         self.board = self.initBoard()
         self.boardState = BoardState(self.canvas, self)
-        self.initDraw()
+        self.introImage(self.initDraw)
         # lighted squares colors
         self.ligtWhite = self.changeCol(*tuple(int(c * 0.4 + 255 * 0.6) for c in (102, 216, 185)))
         self.ligtBlack = self.changeCol(*tuple(int(c * 0.4 + 255 * 0.6) for c in (5, 255, 5)))
@@ -27,6 +28,7 @@ class Board:
                 [None, None, None, None, None, None, None, None],
                 [Pawn('w'), Pawn('w'), Pawn('w'), Pawn('w'), Pawn('w'), Pawn('w'), Pawn('w'), Pawn('w')],
                 [Rook('w'), Knight("w"), Bishop("w"), Queen("w"), King("w"), Bishop("w"), Knight("w"), Rook("w")]]
+        
 
     def lightsOn(self, squares: list):
         for row, col in squares:
@@ -70,8 +72,6 @@ class Board:
                 self.boardState.isPicking = True
                 # move piece
                 oldPiece.makeMove(oldRow, oldCol, row, col, self.size, x, y, self.boardState.piecesTaken ,self.board, self.canvas)
-                def fufu():
-                    print("fufu")
                 oldPiece.pawnOnOppositeSide(self.board, 
                                             lambda color, row, col: self.boardState.pawnPromotion(color, row, col, x, y))
                 # display taken pieces
@@ -97,7 +97,19 @@ class Board:
     def changeCol(self, r, g ,b):
         color = f'#{r:02x}{g:02x}{b:02x}'
         return color
-
+    
+    def introImage(self, drawBoard):
+        begin = Image.open('chess/img/LetsBegin.png')
+        width = self.size*8+(4*self.label) + self.size*5
+        height = self.size*8+(4*self.label)
+        begin = begin.resize((6*self.size, 6*self.size))
+        self.begin = ImageTk.PhotoImage(begin)
+        self.canvas.create_image(width//2, height//2, image=self.begin, tags="beginImg")
+        def f():
+            self.canvas.delete("beginImg")
+            drawBoard()
+        self.root.after(4000, f)
+    
     def initDraw(self):
         #border
         self.canvas.create_rectangle(self.label, self.label, 8*self.size + self.label*3, 8*self.size + self.label*3)
@@ -144,6 +156,7 @@ class Board:
                     pImg = self.canvas.create_image(self.offset+(col*self.size) + self.size/2, self.offset+(row*self.size) + self.size/2, image=self.pieces[-1])
                     self.board[row][col].imgId = pImg
 
+        
         # Stats
         self.boardState.drawStats(self.size*8+(4*self.label), self.label, self.size*8+(3*self.label) + self.size*5, self.size*8+(3*self.label), self.size)
         self.boardState.setTurn()

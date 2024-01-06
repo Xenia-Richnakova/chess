@@ -14,6 +14,7 @@ class BoardState:
             "b": [],
             "w": []
         }
+        self.score = self.readScore()
     
     def setColor(self, r, g ,b):
         color = f'#{r:02x}{g:02x}{b:02x}'
@@ -35,8 +36,12 @@ class BoardState:
         self.sqrSize = sqrSize
         self.canvas.create_text(offsetX1 + sqrSize//1.5, offsetY1 + sqrSize//4, text="Black", 
                            font=("Verdana", sqrSize//4), tags="black", fill=self.setColor(84, 60, 199))
+        self.canvas.create_text(offsetX1 + 3.7*sqrSize, offsetY1 + sqrSize//4, text=f"Won: {self.score['black']}", 
+                           font=("Verdana", sqrSize//4), fill=self.setColor(84, 60, 199))
         self.canvas.create_text(offsetX1 + sqrSize//1.5, offsetY2 - sqrSize//4, text="White", 
                            font=("Verdana", sqrSize//4), tags="white", fill=self.setColor(242, 130, 104))
+        self.canvas.create_text(offsetX1 + 3.7*sqrSize, offsetY2 - sqrSize//4, text=f"Won: {self.score['white']}", 
+                           font=("Verdana", sqrSize//4), fill=self.setColor(242, 130, 104))
         
     def showTaken(self):
         bRowCounter = -1
@@ -54,6 +59,7 @@ class BoardState:
             if isinstance(piece, King):
                 self.gameOver[0] = True
                 self.gameOver[1] = "b"
+                self.endGame()
                 print("Black won")
             if j % 7 == 0:
                 wRowCounter += 1
@@ -111,10 +117,32 @@ class BoardState:
         if self.gameOver[0] == False:
             self.playAgain.pack_forget()
 
+    def readScore(self):
+        with open("chess/score.txt", "r") as f:
+            file = f.readlines()
+        b = file[0].split(":")
+        w = file[1].split(":")
+        score = {
+            "black": int(b[1].replace("\n", "")[1:]),
+            "white": int(w[1][1:])
+        }
+        return score
+    
+    def writeScore(self, color):
+        open("chess/score.txt", 'w').close()
+        with open("chess/score.txt", "w") as f:
+            if color == "w":
+                self.score['white'] = self.score['white'] + 1
+            else:
+                self.score['black'] = self.score['black'] + 1
+            f.write(f"Black: {self.score['black']}\nWhite: {self.score['white']}")
+
     def endGame(self):
         if self.gameOver[1] == "w":
+            self.writeScore("w")
             print("white power")
-        if self.gameOver[1] == "b":
+        elif self.gameOver[1] == "b":
+            self.writeScore("b")
             print("bplm")
         self.playAgain = tkinter.Button(text="Play again!", command=self.setNewGame)
         self.playAgain.pack()

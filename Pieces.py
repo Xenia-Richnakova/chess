@@ -56,6 +56,7 @@ class Pawn(Piece):
             self.path = "chess/img/pawnW.png"
 
     def pawnOnOppositeSide(self, board: list[list], callback):
+        
         if self.color == "w":
             if self in board[0]:
                  callback("w", 0, board[0].index(self))
