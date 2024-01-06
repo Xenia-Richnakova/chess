@@ -28,7 +28,7 @@ class Piece:
     def validMoves(self, row: int, col: int, board: list[list]) -> list[(int, int)]:
         return []
     
-    def pawnOnOppositeSide(self, board: list[list], callback):
+    def pawnOnOppositeSide(self, isOver, board: list[list], callback):
         pass
 
     def makeMove(self, oldRow, oldCol, newRow, newCol, sqrSize, sqrX1, sqrY1, piecesTaken, board, canvas):
@@ -55,14 +55,14 @@ class Pawn(Piece):
         else:
             self.path = "chess/img/pawnW.png"
 
-    def pawnOnOppositeSide(self, board: list[list], callback):
-        
-        if self.color == "w":
-            if self in board[0]:
-                 callback("w", 0, board[0].index(self))
-        if self.color == "b":
-           if self in board[-1]:
-                callback("b", -1, board[-1].index(self))
+    def pawnOnOppositeSide(self, isOver, board: list[list], callback):
+        if isOver == False:
+            if self.color == "w":
+                if self in board[0]:
+                    callback("w", 0, board[0].index(self))
+            if self.color == "b":
+                if self in board[-1]:
+                    callback("b", -1, board[-1].index(self))
                    
     
     def validMoves(self, row: int, col: int, board: list[list]) -> list[(int, int)]:

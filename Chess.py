@@ -8,7 +8,9 @@ class Board:
         self.size = 70
         self.label = 20
         self.root = tkinter.Tk()
-        self.canvas = tkinter.Canvas(self.root, width=self.size*8+(4*self.label) + self.size*5, height=self.size*8+(4*self.label))
+        self.canWidth = self.size*8+(4*self.label) + self.size*5
+        self.canHeight = self.size*8+(4*self.label)
+        self.canvas = tkinter.Canvas(self.root, width=self.canWidth, height=self.canHeight)
         self.offset = self.label*2
         self.canvas.pack()
 
@@ -18,7 +20,7 @@ class Board:
         # lighted squares colors
         self.ligtWhite = self.changeCol(*tuple(int(c * 0.4 + 255 * 0.6) for c in (102, 216, 185)))
         self.ligtBlack = self.changeCol(*tuple(int(c * 0.4 + 255 * 0.6) for c in (5, 255, 5)))
-    
+
     def initBoard(self) -> list[list[Piece]]: 
         return [[Rook("b"), Knight("b"), Bishop("b"), Queen("b"), King("b"), Bishop("b"), Knight("b"), Rook("b")],
                 [Pawn('b'), Pawn('b'), Pawn('b'), Pawn('b'), Pawn('b'), Pawn('b'), Pawn('b'), Pawn('b')],
@@ -72,10 +74,13 @@ class Board:
                 self.boardState.isPicking = True
                 # move piece
                 oldPiece.makeMove(oldRow, oldCol, row, col, self.size, x, y, self.boardState.piecesTaken ,self.board, self.canvas)
-                oldPiece.pawnOnOppositeSide(self.board, 
-                                            lambda color, row, col: self.boardState.pawnPromotion(color, row, col, x, y))
                 # display taken pieces
                 self.boardState.showTaken()
+                # Promote pieces
+                def promotion(color, row, col):
+                    self.boardState.pawnPromotion(color, row, col, x, y)
+                oldPiece.pawnOnOppositeSide(self.boardState.gameOver[0], self.board, promotion)
+                
                 #change player
                 self.boardState.setTurn()
             else:
@@ -100,11 +105,9 @@ class Board:
     
     def introImage(self, drawBoard):
         begin = Image.open('chess/img/LetsBegin.png')
-        width = self.size*8+(4*self.label) + self.size*5
-        height = self.size*8+(4*self.label)
         begin = begin.resize((6*self.size, 6*self.size))
         self.begin = ImageTk.PhotoImage(begin)
-        self.canvas.create_image(width//2, height//2, image=self.begin, tags="beginImg")
+        self.canvas.create_image(self.canWidth//2, self.canHeight//2, image=self.begin, tags="beginImg")
         def f():
             self.canvas.delete("beginImg")
             drawBoard()

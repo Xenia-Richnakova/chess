@@ -50,7 +50,6 @@ class BoardState:
                 self.gameOver[0] = True
                 self.gameOver[1] = "w"
                 self.endGame()
-                print(self.gameOver)
             if i % 7 == 0:
                 bRowCounter += 1
             self.canvas.coords(piece.imgId, self.sqrSize*9.55 + (i%7)*(self.sqrSize - self.sqrSize*0.35), self.sqrSize//0.8 + bRowCounter*self.sqrSize)
@@ -60,7 +59,6 @@ class BoardState:
                 self.gameOver[0] = True
                 self.gameOver[1] = "b"
                 self.endGame()
-                print("Black won")
             if j % 7 == 0:
                 wRowCounter += 1
             self.canvas.coords(piece.imgId, self.sqrSize*9.55 + (j%7)*(self.sqrSize - self.sqrSize*0.35), self.sqrSize*7.85 - wRowCounter*self.sqrSize)
@@ -115,7 +113,7 @@ class BoardState:
 
     def removeButton(self):
         if self.gameOver[0] == False:
-            self.playAgain.pack_forget()
+            self.playAgain.destroy()
 
     def readScore(self):
         with open("chess/score.txt", "r") as f:
@@ -137,13 +135,37 @@ class BoardState:
                 self.score['black'] = self.score['black'] + 1
             f.write(f"Black: {self.score['black']}\nWhite: {self.score['white']}")
 
+    def openAnim(self, pieceImg, num):
+        self.width = self.sqrSize*8+(4*self.offset)
+        self.height = self.sqrSize*8+(4*self.offset)
+        self.canvas.create_image(self.width//2, self.height//2, image=pieceImg, tags=f"king{num}")
+
+    def showNext(self, oldIndex, max):
+        self.canvas.delete(f"king{oldIndex}")
+        if oldIndex == max:
+            return
+        self.openAnim(self.winnerImages[oldIndex], oldIndex+1)
+        self.mainBoard.root.after(400, lambda: self.showNext(oldIndex+1, max))
+
+    def winnerDance(self, winCol):
+        self.winnerImages: list = []
+        for i in range(1,10):
+            img = Image.open(f"chess/anim/king{winCol}_{i}.png")
+            img = img.resize((self.sqrSize*2, self.sqrSize*2))
+            pieceImg = ImageTk.PhotoImage(img)
+            self.winnerImages.append(pieceImg)
+        self.openAnim(self.winnerImages[0], 1)
+        self.mainBoard.root.after(400, lambda: self.showNext(1, 9))
+
     def endGame(self):
         if self.gameOver[1] == "w":
             self.writeScore("w")
-            print("white power")
+            self.winnerDance("W")
         elif self.gameOver[1] == "b":
             self.writeScore("b")
-            print("bplm")
-        self.playAgain = tkinter.Button(text="Play again!", command=self.setNewGame)
-        self.playAgain.pack()
+            self.winnerDance("B")
+        self.btn = ImageTk.PhotoImage(file="chess/img/button_play-again.png")
+        self.playAgain = tkinter.Button(self.mainBoard.root, image=self.btn, border=0, command=self.setNewGame)
+        self.playAgain.place(x=self.width//8 + self.width, y=self.height//2)
+
         
